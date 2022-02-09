@@ -1,0 +1,44 @@
+public class ProGen01 : MonoBehaviour
+{
+    public int count = 10;
+    //Use list to reserve the results.
+    public List<float> Numbers;
+    public List<Color> Colors;
+    
+    public float S;
+    public float V;
+
+    public int i;
+
+    public Gradient Gradient;
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        //Initializes the random number generator state with a seed.
+        Random.InitState(i);
+         for (int i = 0; i < count; i++)
+        {
+            //Numbers.Add(Random.Range(0f, 1f));
+            /* float r;
+             float g;
+             float b;
+             r = Random.Range(0f, 1f);
+             g = Random.Range(0f, 1f);
+             b = Random.Range(0f, 1f);
+      //  Use add method to add element to list
+             Colors.Add
+                 (
+                 new Color(r,g,b)
+                 );*/
+
+            Colors.Add
+                (
+
+                Gradient.Evaluate(Random.Range(0f,1f))
+
+                );
+
+
+        }
+    }
