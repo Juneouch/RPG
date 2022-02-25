@@ -1,0 +1,38 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class ProGen02 : MonoBehaviour
+{
+    public int count = 10;
+    public List<GameObject> Prefab;
+    public float Size;
+
+    public AnimationCurve curve;
+
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        //Random.InitState(123);
+         for (int i = 0; i < count; i++)
+        {
+            Vector3 position = new Vector3
+            (
+                Random.Range(-Size,+Size),0,Random.Range(-Size,+Size)
+            );
+            Quaternion rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), 0);
+            //identity means no rotation
+            GameObject prefab = Prefab[Random.Range(0, Prefab.Count)];
+           GameObject tree= Instantiate(prefab, position, rotation,transform);
+            tree.transform.localScale *= Random.Range(0.5f, 1.5f);
+
+        }
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+       
+    }
+}
