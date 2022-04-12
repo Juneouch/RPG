@@ -1,0 +1,81 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class BuildingGenerator : MonoBehaviour
+{
+    public GameObject wallPrefab;
+    public GameObject roofPref;
+    public GameObject windowPrefab;
+    public GameObject DoorPrefab;
+    [Range(0, 1)]
+    public float windowPercentChance = 0.2f;
+    public float DoorPercentChance = 0.4f;
+
+
+    public bool includeRoof = false;
+
+    [Header("Size")]
+    public int width=5;
+    public int height = 5;
+    public float cellUnitSize=1;
+    public int numberOfFloors = 1;
+    //We should keep track the the numbers of floors and pass to the floor strcture?
+    public Floor[] floors;
+
+    private void Awake()
+    {
+        Generate();
+        Render();
+    }
+    //用数据结构先构建一个楼房的结构
+    void Generate()
+    {
+        floors = new Floor[numberOfFloors];//生成一个数组
+        int floorCount = 0;
+        foreach (Floor floor in floors)
+        {
+            Room[,] rooms = new Room[width, height];
+            for (int i = 0; i < width; i++)
+            {
+                for (int j = 0; j < height; j++)
+                {
+                    //(Vector2 pos, bool hasRoof = false)
+                    rooms[i, j] = new Room(new Vector2(i*cellUnitSize, j*cellUnitSize), includeRoof ? (floorCount==floors.Length-1):false);
+                    //?: 最终需要传回的是bool值，如果当前的floor是最顶层，传回true
+                }               
+            }
+            floors[floorCount] = new Floor(floorCount++, rooms);
+        }
+    }
+    void Render()
+    {
+        foreach (Floor floor in floors)
+        {
+            for (int i = 0; i < width; i++)
+            {
+                for (int j = 0; j < height; j++)
+                {
+                    Room room = floor.rooms[i, j];
+                    //Room 里面有Vector2的属性，不包含floor的属性
+                    //生成一个房子需要四面墙
+                    var Wall0 = Instantiate(wallPrefab, new Vector3(room.RoomPosition.x, floor.FloorNumber, room.RoomPosition.y), Quaternion.Euler(0, 0, 0));
+                    Wall0.transform.parent = transform;                    
+                    var Wall1 = Instantiate(wallPrefab, new Vector3(room.RoomPosition.x, floor.FloorNumber, room.RoomPosition.y), Quaternion.Euler(0, 90, 0));
+                    Wall1.transform.parent = transform;
+                    var Wall2 = Instantiate(wallPrefab, new Vector3(room.RoomPosition.x, floor.FloorNumber, room.RoomPosition.y), Quaternion.Euler(0, 180, 0));
+                    Wall2.transform.parent = transform;
+                    var Wall4 = Instantiate(wallPrefab, new Vector3(room.RoomPosition.x, floor.FloorNumber, room.RoomPosition.y), Quaternion.Euler(0, -90, 0));
+                    Wall4.transform.parent = transform;
+                    if (room.HasRoof)
+                    {
+                        var roof = Instantiate(roofPref, new Vector3(room.RoomPosition.x, floor.FloorNumber, room.RoomPosition.y), Quaternion.identity);
+                        roof.transform.parent = transform;
+                    }
+                }
+
+            }
+        }
+    }
+
+}
