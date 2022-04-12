@@ -79,3 +79,152 @@ public class BuildingGenerator : MonoBehaviour
     }
 
 }
+-------------------------------------------
+Advanced Version:
+-------------------
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class BuildingGenerator : MonoBehaviour
+{
+    public GameObject wallPrefab;
+    public GameObject roofPref;
+    public GameObject windowPrefab;
+    public GameObject DoorPrefab;
+
+    [Range(0, 1)]
+    public float windowPercentChance = 0.2f;
+    [Range(0, 1)]
+    public float DoorPercentChance = 0.4f;
+
+
+    public bool includeRoof = false;
+
+    [Header("Size")]
+    [Range(0,10)]
+    public int setRow=3;
+    [Range(0, 10)]
+    public int setColumn = 3;
+    public float cellUnitSize=1;
+    [Range(0, 10)]
+    public int numberOfFloors = 1;
+    //-------------------------------------------------------------------------
+    //We should keep track the the numbers of floors and pass to the floor strcture?
+    public Floor[] floors;
+
+    private List<GameObject> rooms = new List<GameObject>();
+    private int prefabCounter = 0;
+    private void Awake() => Generate();
+
+    //Call THIS IN FUNCTION WHEN USE BUTTON
+    public void Generate()
+    {
+        prefabCounter = 0;
+        Clear();
+        DataStructure();
+        Render();
+
+    }
+
+    private void Clear()
+    {
+        for (int i = 0; i < rooms.Count; i++)
+        {
+            DestroyImmediate(rooms[i]);
+        }
+        rooms.Clear();
+    }
+
+    //用数据结构先构建一个楼房的结构
+    void DataStructure()
+    {
+        floors = new Floor[numberOfFloors];//生成一个数组
+        int floorCount = 0;
+        //Create every floor
+        foreach (Floor floor in floors)
+        {
+            Room[,] rooms = new Room[setRow, setColumn];
+            for (int row = 0; row < setRow; row++)
+            {
+                for (int col = 0; col < setColumn; col++)
+                {
+                    //?: 最终需要传回的是bool值，如果当前的floor是最顶层，传回true
+                    var roomPosition = new Vector3(row * cellUnitSize, floorCount, col * cellUnitSize);
+                    //(Vector2 pos, bool hasRoof = false)
+                    rooms[row, col] = new Room(roomPosition, includeRoof ? (floorCount == floors.Length - 1) : false);
+                    //Null reference exception error---beacause arrays are reference type, so in the room data ,we shuld instantiate it
+                    rooms[row, col].Walls[0] = new Wall(roomPosition, Quaternion.Euler(0, 0, 0));
+                    rooms[row, col].Walls[1] = new Wall(roomPosition, Quaternion.Euler(0, 90, 0));
+                    rooms[row, col].Walls[2] = new Wall(roomPosition, Quaternion.Euler(0,180, 0));
+                    rooms[row, col].Walls[3] = new Wall(roomPosition, Quaternion.Euler(0, -90, 0));
+                }               
+            }
+            floors[floorCount] = new Floor(floorCount++, rooms);
+        }
+    }
+    void Render()
+    {
+        //基于数据结构的位置再instatiate
+        foreach (Floor floor in floors)
+        {
+            for (int i = 0; i < setRow; i++)
+            {
+                for (int j = 0; j < setColumn; j++)
+                {
+                    Room room = floor.rooms[i, j];
+                    GameObject roomGo = new GameObject($"Room{i}_{j}");
+                    rooms.Add(roomGo);
+                    roomGo.transform.parent = transform;
+                    if (floor.FloorNumber==0)
+                    {
+                        RoomPlacement(UnityEngine.Random.Range(0f, 1f) <= DoorPercentChance ? DoorPrefab : wallPrefab, room, roomGo);
+                    }
+                    else
+                        RoomPlacement(UnityEngine.Random.Range(0f, 1f) <= DoorPercentChance ? windowPrefab : wallPrefab, room, roomGo);
+                    // Vector3 roomPosition = new Vector3(room.RoomPosition.x, floor.FloorNumber, room.RoomPosition.y);
+                    //Room 里面有Vector2的属性，不包含floor的属性
+                    //生成一个房子需要四面墙
+                    /*var Wall0 = Instantiate(wallPrefab, new Vector3(room.RoomPosition.x, floor.FloorNumber, room.RoomPosition.y), Quaternion.Euler(0, 0, 0));
+                    Wall0.transform.parent = transform;                    
+                    var Wall1 = Instantiate(wallPrefab, new Vector3(room.RoomPosition.x, floor.FloorNumber, room.RoomPosition.y), Quaternion.Euler(0, 90, 0));
+                    Wall1.transform.parent = transform;
+                    var Wall2 = Instantiate(wallPrefab, new Vector3(room.RoomPosition.x, floor.FloorNumber, room.RoomPosition.y), Quaternion.Euler(0, 180, 0));
+                    Wall2.transform.parent = transform;
+                    var Wall4 = Instantiate(wallPrefab, new Vector3(room.RoomPosition.x, floor.FloorNumber, room.RoomPosition.y), Quaternion.Euler(0, -90, 0));
+                    Wall4.transform.parent = transform;
+                    if (room.HasRoof)
+                    {
+                        var roof = Instantiate(roofPref, new Vector3(room.RoomPosition.x, floor.FloorNumber, room.RoomPosition.y), Quaternion.identity);
+                        roof.transform.parent = transform;
+                    }*/
+                }
+
+            }
+        }
+    }
+    private void RoomPlacement(GameObject prefab,Room room,GameObject roomGo)
+    {
+        //到时候需要把数据传进来
+       SpawnPrefab(prefab,roomGo.transform,room.Walls[0].Position,room.Walls[0].Roatation);
+       SpawnPrefab(prefab, roomGo.transform, room.Walls[1].Position, room.Walls[1].Roatation);
+       SpawnPrefab(prefab, roomGo.transform, room.Walls[2].Position, room.Walls[2].Roatation);
+       SpawnPrefab(prefab, roomGo.transform, room.Walls[2].Position, room.Walls[2].Roatation);
+        if (room.HasRoof)
+        {
+            SpawnPrefab(roofPref, roomGo.transform, room.Walls[0].Position, room.Walls[0].Roatation);
+        }
+
+    }
+    private void SpawnPrefab(GameObject prefab,Transform parent,Vector3 pos,Quaternion rotation)
+    {
+        var gameobject = Instantiate(prefab, pos, rotation);
+        gameObject.transform.parent = parent;
+        //gameObject.AddComponent<WallComponent>();
+        gameObject.name = $"{gameObject.name}_{prefabCounter}";
+        prefabCounter++;
+    }
+
+}
+
